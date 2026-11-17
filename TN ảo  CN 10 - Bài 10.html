@@ -1,0 +1,1820 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Thí Nghiệm Ảo: Nhận Biết Phân Bón Hóa Học (Bài 10 - Công Nghệ 10)</title>
+<style>
+  /* ================= BIẾN MÀU & CÀI ĐẶT CHUNG ================= */
+  :root {
+    --primary: #1b5e20;
+    --primary-mid: #2e7d32;
+    --primary-light: #e8f5e9;
+    --blue: #0277bd;
+    --blue-light: #e1f5fe;
+    --amber: #ef6c00;
+    --amber-light: #fff3e0;
+    --danger: #c62828;
+    --bg: #f0f4f8;
+    --card: #ffffff;
+    --text: #1c2833;
+    --muted: #566573;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+  }
+
+  /* ================= HEADER & THANH TRẠNG THÁI ================= */
+  header {
+    position: sticky;
+    top: 0;
+    background: linear-gradient(135deg, var(--primary), var(--primary-mid));
+    color: #fff;
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.16);
+    z-index: 40;
+  }
+
+  .header-info h1 { font-size: 0.95rem; font-weight: 700; }
+  .header-info span { font-size: 0.72rem; opacity: 0.92; display: block; }
+  .header-actions { display: flex; gap: 6px; }
+
+  .icon-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: #fff;
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  .icon-btn:active { transform: scale(0.92); background: rgba(255,255,255,0.34); }
+
+  /* Thanh 4 màn chơi */
+  .stepper {
+    position: sticky;
+    top: 54px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    background: #fff;
+    border-bottom: 1px solid #d5dbdb;
+    z-index: 35;
+  }
+
+  .step-tab {
+    padding: 8px 2px;
+    text-align: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+  .step-tab.active { color: var(--primary); border-bottom-color: var(--primary); background: #f4fbf5; }
+  .step-tab.done { color: var(--blue); }
+
+  /* Thanh điểm số & đồng hồ */
+  .status-bar {
+    max-width: 520px;
+    width: 100%;
+    margin: 8px auto 0;
+    padding: 0 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  .badge-pill {
+    background: #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #cfd8dc;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .score-pill { color: var(--primary); border-color: #a5d6a7; background: #f1f8e9; }
+
+  /* ================= KHU VỰC CHÍNH ================= */
+  .main-scroll-area {
+    flex: 1;
+    max-width: 520px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 8px 10px 96px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .mission-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 10px 12px;
+    border-left: 5px solid var(--amber);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+
+  .mission-title {
+    font-size: 0.74rem;
+    font-weight: 800;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 3px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .hint-btn {
+    background: var(--amber-light);
+    border: 1px solid #ffcc80;
+    color: #e65100;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  .mission-text { font-size: 0.85rem; line-height: 1.4; color: var(--text); }
+
+  /* Bàn thí nghiệm */
+  .stage {
+    min-height: 315px;
+    background: linear-gradient(180deg, #ffffff 0%, #eaf0f4 76%, #cfd8dc 100%);
+    border-radius: 18px;
+    border: 1.5px solid #cfd8dc;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 12px 10px 18px;
+    box-shadow: inset 0 -6px 12px rgba(0,0,0,0.06), 0 3px 10px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+
+  /* Kệ đựng lọ hóa chất */
+  .bottles-shelf {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    z-index: 10;
+  }
+
+  .bottle-card {
+    background: rgba(255,255,255,0.95);
+    border: 2px solid #b0bec5;
+    border-radius: 13px;
+    padding: 8px 4px;
+    text-align: center;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.07);
+    touch-action: none;
+  }
+  .bottle-card:active { transform: scale(0.95); }
+  .bottle-card.selected { border-color: var(--primary); background: var(--primary-light); box-shadow: 0 0 0 3px rgba(46,125,50,0.25); }
+  .bottle-card.locked { opacity: 0.65; pointer-events: none; }
+  .bottle-card.draggable-ready { cursor: grab; border-color: #0288d1; animation: gentlePulse 1.5s infinite; }
+  .bottle-card.sorted-done { opacity: 0.4; pointer-events: none; animation: none; }
+
+  .bottle-icon { font-size: 1.45rem; display: block; pointer-events: none; }
+  .bottle-name { font-size: 0.84rem; font-weight: 700; margin-top: 2px; display: block; pointer-events: none; }
+
+  .bottle-badge {
+    position: absolute; top: -8px; right: -3px;
+    padding: 2px 7px; border-radius: 10px;
+    font-size: 0.65rem; font-weight: 700; color: #fff;
+    display: none; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .badge-lan { background: #6d4c41; display: inline-block; }
+  .badge-dam { background: #2e7d32; display: inline-block; }
+  .badge-kali { background: #7b1fa2; display: inline-block; }
+
+  /* Vùng kéo thả (Drag & Drop) */
+  .drop-zones-bar {
+    display: none;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    z-index: 12;
+  }
+  .drop-zones-bar.three-cols { grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+  .drop-target {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2.5px dashed #0288d1;
+    border-radius: 14px;
+    padding: 8px 4px;
+    text-align: center;
+    transition: all 0.2s;
+    min-height: 58px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  .drop-target.drag-over { background: #e1f5fe; border-color: #01579b; border-style: solid; transform: scale(1.04); }
+  .drop-target.matched { background: var(--primary-light); border: 2.5px solid var(--primary); color: var(--primary); }
+  .drop-target-title { font-size: 0.78rem; font-weight: 800; color: #01579b; }
+  .drop-target.matched .drop-target-title { color: var(--primary); }
+  .drop-target-sub { font-size: 0.66rem; color: var(--muted); margin-top: 2px; }
+
+  /* Khu vực ống nghiệm & đèn cồn */
+  .apparatus-zone {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    position: relative;
+    padding-top: 26px;
+    min-height: 185px;
+  }
+
+  .tubes-rack {
+    display: flex;
+    gap: 24px;
+    align-items: flex-end;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .tube-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    touch-action: none;
+    transition: opacity 0.25s;
+  }
+  .tube-unit.draggable-ready { cursor: grab; animation: gentlePulse 1.5s infinite; }
+  .tube-unit.sorted-done { opacity: 0.35; pointer-events: none; animation: none; }
+
+  @keyframes gentlePulse {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+
+  /* Ống nhỏ giọt SVG */
+  .dropper-anim-box {
+    position: absolute; top: -62px; left: 50%;
+    transform: translateX(-50%);
+    display: none; flex-direction: column; align-items: center;
+    pointer-events: none; z-index: 25;
+  }
+  .dropper-anim-box.active { display: flex; animation: dropperFadeIn 0.25s ease-out; }
+  @keyframes dropperFadeIn { from { opacity: 0; transform: translate(-50%, -8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+  .dropper-badge { background: #01579b; color: #fff; font-size: 0.65rem; font-weight: 800; padding: 2px 7px; border-radius: 8px; margin-bottom: 2px; }
+  .pipette-svg { width: 24px; height: 36px; }
+  .falling-drop {
+    width: 8px; height: 11px;
+    background: radial-gradient(circle at 30% 30%, #e1f5fe, #0288d1);
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    position: absolute; top: 48px; opacity: 0;
+  }
+  .falling-drop.dropping { animation: liquidDropFall 0.65s ease-in forwards; }
+  @keyframes liquidDropFall {
+    0% { transform: translateY(0) scale(0.7); opacity: 1; }
+    75% { transform: translateY(42px) scale(1); opacity: 1; }
+    100% { transform: translateY(58px) scale(0.4); opacity: 0; }
+  }
+
+  /* Ống nghiệm thủy tinh */
+  .tube-rim { width: 52px; height: 5px; border: 2px solid #78909c; border-radius: 4px; background: #eceff1; pointer-events: none; }
+  .tube-glass {
+    width: 44px; height: 120px;
+    border: 2.5px solid #78909c; border-top: none;
+    border-radius: 0 0 22px 22px;
+    background: rgba(255,255,255,0.55);
+    position: relative; overflow: hidden;
+    box-shadow: inset -4px 0 6px rgba(255,255,255,0.85), 2px 3px 6px rgba(0,0,0,0.1);
+    pointer-events: none;
+  }
+  .tube-water {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
+    background: rgba(129, 212, 250, 0.55);
+    transition: height 0.7s ease, background-color 0.7s ease;
+  }
+  .tube-powder {
+    position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+    width: 28px; height: 12px; border-radius: 0 0 14px 14px;
+    background: #bdbdbd; opacity: 0;
+    transition: all 0.6s ease;
+  }
+  /* Lớp kết tủa trắng đục (Cải tiến hiển thị rõ nét) */
+  .tube-precipitate {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
+    background: radial-gradient(circle at 20% 30%, #ffffff 4px, transparent 5px),
+                radial-gradient(circle at 80% 60%, #ffffff 3px, transparent 4px),
+                radial-gradient(circle at 50% 80%, #ffffff 4.5px, transparent 5.5px),
+                linear-gradient(to top, rgba(255,255,255,0.98) 70%, rgba(235,245,255,0.9) 100%);
+    background-size: 14px 14px, 18px 18px, 16px 16px, 100% 100%;
+    border-top: 2px solid rgba(255, 255, 255, 0.9);
+    transition: height 0.8s ease, background 0.5s ease;
+    z-index: 5;
+  }
+  .tube-label { margin-top: 5px; font-size: 0.75rem; font-weight: 700; background: #fff; padding: 2px 9px; border-radius: 8px; border: 1px solid #cfd8dc; pointer-events: none; }
+
+  .dragging-ghost { position: fixed; z-index: 9999; pointer-events: none; transform: translate(-50%, -50%) scale(1.1) rotate(-4deg); filter: drop-shadow(0 10px 16px rgba(0,0,0,0.28)); }
+
+  @keyframes shakeAnim { 0%, 100% { transform: rotate(0deg); } 25% { transform: rotate(-14deg); } 50% { transform: rotate(14deg); } 75% { transform: rotate(-10deg); } }
+  .shaking { animation: shakeAnim 0.45s ease-in-out 3; }
+
+  @keyframes wrongWobble { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-8px); } 50% { transform: translateX(8px); } 75% { transform: translateX(-6px); } }
+  .wrong-shake { animation: wrongWobble 0.35s ease; border-color: var(--danger) !important; background: #ffebee !important; }
+
+  /* Đèn cồn & thìa đốt */
+  .burner-stage { display: none; width: 100%; height: 155px; position: relative; align-items: flex-end; justify-content: center; }
+  .lamp-body { width: 78px; height: 56px; background: rgba(224, 247, 250, 0.85); border: 2.5px solid #607d8b; border-radius: 28px 28px 10px 10px; position: relative; display: flex; justify-content: center; }
+  .lamp-fuel { position: absolute; bottom: 0; width: 100%; height: 62%; background: rgba(79, 195, 247, 0.45); border-radius: 0 0 8px 8px; }
+  .lamp-wick { position: absolute; top: -14px; width: 14px; height: 14px; background: #90a4ae; border-radius: 3px; }
+  .fire-flame {
+    position: absolute; top: -54px; width: 24px; height: 42px;
+    background: radial-gradient(ellipse at bottom, #fff9c4 10%, #ff9800 60%, #e53935 95%);
+    border-radius: 50% 50% 35% 35%; box-shadow: 0 0 16px rgba(255, 152, 0, 0.75);
+    display: none; animation: flameFlicker 0.14s infinite alternate;
+  }
+  .fire-flame.lit { display: block; }
+  .fire-flame.purple-flame { background: radial-gradient(ellipse at bottom, #f3e5f5 10%, #ab47bc 55%, #6a1b9a 95%); box-shadow: 0 0 22px rgba(171, 71, 188, 0.95); }
+  @keyframes flameFlicker { from { transform: scale(1) rotate(-2deg); } to { transform: scale(1.06, 0.94) rotate(2deg); } }
+
+  .metal-spoon { position: absolute; top: 18px; right: 20%; width: 128px; height: 24px; transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1); z-index: 8; }
+  .metal-spoon.over-fire { transform: translate(-50px, 36px); }
+  .spoon-head { width: 34px; height: 13px; background: linear-gradient(#cfd8dc, #78909c); border-radius: 0 0 16px 16px; border: 1.5px solid #546e7a; position: relative; }
+  .spoon-stick { position: absolute; top: 2px; left: 32px; width: 92px; height: 5px; background: #b0bec5; border: 1px solid #607d8b; border-radius: 0 4px 4px 0; transform: rotate(-7deg); transform-origin: left center; }
+  .spoon-granule { position: absolute; top: -4px; left: 10px; width: 13px; height: 6px; background: #fff; border: 1px solid #9e9e9e; border-radius: 50%; display: none; }
+  .smoke-cloud { position: absolute; top: -36px; left: 4px; font-size: 1.45rem; opacity: 0; pointer-events: none; }
+  @keyframes smokeFloat { 0% { transform: translateY(0) scale(0.8); opacity: 0.95; } 100% { transform: translateY(-34px) scale(1.5); opacity: 0; } }
+  .smoke-active { animation: smokeFloat 1.2s infinite ease-out; }
+
+  .phenomenon-tag {
+    position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+    background: rgba(28, 40, 51, 0.92); color: #fff;
+    padding: 5px 12px; border-radius: 20px; font-size: 0.74rem; font-weight: 600;
+    white-space: nowrap; display: none; z-index: 15; max-width: 95%; overflow: hidden; text-overflow: ellipsis;
+  }
+
+  /* Thanh công cụ dưới đáy */
+  footer.toolbar-footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card); border-top: 1px solid #d5dbdb;
+    padding: 8px 10px 10px; box-shadow: 0 -3px 12px rgba(0,0,0,0.08); z-index: 40;
+  }
+  .tools-grid { max-width: 520px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .touch-tool {
+    background: #f8f9fa; border: 2px solid #d5dbdb; border-radius: 12px;
+    padding: 6px 4px; min-height: 50px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font-size: 0.73rem; font-weight: 700; color: var(--text); cursor: pointer;
+  }
+  .touch-tool:active { transform: scale(0.94); }
+  .touch-tool.selected-tool { background: var(--amber-light); border-color: var(--amber); color: #e65100; }
+  .touch-tool:disabled { opacity: 0.4; pointer-events: none; }
+  .touch-tool .t-ico { font-size: 1.2rem; line-height: 1; }
+
+  /* Các hộp thoại (Modal) */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.65); backdrop-filter: blur(3px);
+    display: none; align-items: center; justify-content: center; padding: 14px; z-index: 100;
+  }
+  .overlay.show { display: flex; }
+  .dialog-box {
+    background: #fff; width: 100%; max-width: 430px; border-radius: 20px; padding: 18px;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25); animation: popIn 0.24s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    max-height: 88dvh; overflow-y: auto;
+  }
+  @keyframes popIn { from { transform: scale(0.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .dialog-box h2 { font-size: 1.08rem; color: var(--primary); margin-bottom: 8px; }
+  .dialog-box p { font-size: 0.86rem; line-height: 1.45; color: var(--text); margin-bottom: 12px; }
+
+  .form-group { margin-bottom: 10px; text-align: left; }
+  .form-group label { font-size: 0.78rem; font-weight: 700; color: var(--primary); display: block; margin-bottom: 3px; }
+  .form-control { width: 100%; padding: 10px 12px; border: 2px solid #b0bec5; border-radius: 10px; font-size: 0.9rem; outline: none; }
+  .form-control:focus { border-color: var(--primary); }
+
+  .cta-btn {
+    width: 100%; padding: 11px; border: none; border-radius: 13px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-mid));
+    color: #fff; font-size: 0.92rem; font-weight: 700; cursor: pointer;
+    box-shadow: 0 4px 10px rgba(27,94,32,0.28);
+  }
+  .cta-btn:active { transform: scale(0.97); }
+  .cta-btn.blue-btn { background: linear-gradient(135deg, #0277bd, #0288d1); box-shadow: 0 4px 10px rgba(2,119,189,0.28); margin-bottom: 8px; }
+  .cta-btn.secondary { background: #eceff1; color: var(--text); box-shadow: none; margin-top: 8px; }
+
+  .summary-table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.78rem; }
+  .summary-table th, .summary-table td { border: 1px solid #cfd8dc; padding: 6px 5px; text-align: left; }
+  .summary-table th { background: var(--primary-light); color: var(--primary); }
+
+  .reagent-picker { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 8px; }
+  .reagent-opt {
+    padding: 11px; border: 2px solid #b3e5fc; background: #e1f5fe; border-radius: 12px;
+    font-weight: 700; color: #01579b; font-size: 0.88rem; cursor: pointer;
+    display: flex; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+  <!-- ================= HEADER ================= -->
+  <header>
+    <div class="header-info">
+      <h1>🧪 Nhận Biết Phân Bón Hóa Học</h1>
+      <span id="subModeText">Bài 10 - Công nghệ 10 (KNTT)</span>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" onclick="openHelpModal()" title="Hướng dẫn">❓</button>
+      <button class="icon-btn" onclick="toggleAudio()" id="audioBtn" title="Bật/Tắt âm thanh">🔊</button>
+      <button class="icon-btn" onclick="confirmReset()" title="Làm lại từ đầu">🔄</button>
+    </div>
+  </header>
+
+  <!-- ================= THANH 4 MÀN CHƠI ================= -->
+  <div class="stepper">
+    <div class="step-tab active" id="tab1">Màn 1: Độ tan</div>
+    <div class="step-tab" id="tab2">Màn 2: Đốt lửa</div>
+    <div class="step-tab" id="tab3">Màn 3: Phân Đạm</div>
+    <div class="step-tab" id="tab4">Màn 4: Phân Kali</div>
+  </div>
+
+  <!-- ================= THANH ĐIỂM & ĐỒNG HỒ ================= -->
+  <div class="status-bar">
+    <span class="badge-pill score-pill">🏆 Điểm: <span id="totalScoreDisplay">100</span>/100</span>
+    <span class="badge-pill" id="timerText">⏱ 00:00</span>
+  </div>
+
+  <!-- ================= KHU VỰC THỰC HÀNH ================= -->
+  <main class="main-scroll-area">
+    <div class="mission-card">
+      <div class="mission-title">
+        <span id="stepCode">MÀN 1 - PHÂN BIỆT NHÓM TAN & ÍT TAN</span>
+        <button class="hint-btn" onclick="showCurrentHint()">💡 Gợi ý</button>
+      </div>
+      <div class="mission-text" id="missionText">
+        Bấm <b>🥄 Thìa</b> ở thanh bên dưới rồi chạm lần lượt vào 3 lọ <b>A, B, C</b> để lấy mẫu cho vào ống nghiệm.
+      </div>
+    </div>
+
+    <div class="stage" id="labStage">
+      <div class="phenomenon-tag" id="phenomenonTag">Hiện tượng quan sát</div>
+
+      <!-- Kệ 3 lọ mất nhãn A, B, C -->
+      <div class="bottles-shelf" id="bottlesShelf">
+        <div class="bottle-card" id="bottleA" onclick="tapBottle('A')">
+          <span class="bottle-badge" id="badgeA"></span>
+          <span class="bottle-icon">🫙</span>
+          <span class="bottle-name">Lọ A</span>
+        </div>
+        <div class="bottle-card" id="bottleB" onclick="tapBottle('B')">
+          <span class="bottle-badge" id="badgeB"></span>
+          <span class="bottle-icon">🫙</span>
+          <span class="bottle-name">Lọ B</span>
+        </div>
+        <div class="bottle-card" id="bottleC" onclick="tapBottle('C')">
+          <span class="bottle-badge" id="badgeC"></span>
+          <span class="bottle-icon">🫙</span>
+          <span class="bottle-name">Lọ C</span>
+        </div>
+      </div>
+
+      <!-- Vùng thả phân loại -->
+      <div class="drop-zones-bar" id="dropZonesBar"></div>
+
+      <!-- Giá ống nghiệm & đèn cồn -->
+      <div class="apparatus-zone">
+        <div class="tubes-rack" id="tubesRack">
+          <!-- Ống 0 -->
+          <div class="tube-unit" id="tubeUnit0" onclick="tapTube(0)">
+            <div class="dropper-anim-box" id="dropperBox0">
+              <span class="dropper-badge" id="dropperName0">BaCl₂</span>
+              <svg class="pipette-svg" viewBox="0 0 24 38">
+                <path d="M8 2 C8 0, 16 0, 16 2 L16 10 L8 10 Z" fill="#ef5350"/>
+                <rect x="9.5" y="10" width="5" height="16" fill="rgba(225,245,254,0.9)" stroke="#546e7a" stroke-width="1.3"/>
+                <path d="M9.5 26 L14.5 26 L12.8 35 L11.2 35 Z" fill="rgba(225,245,254,0.9)" stroke="#546e7a" stroke-width="1.2"/>
+              </svg>
+              <div class="falling-drop" id="fallingDrop0"></div>
+            </div>
+            <div class="tube-rim"></div>
+            <div class="tube-glass" id="tubeGlass0">
+              <div class="tube-water" id="tubeWater0"></div>
+              <div class="tube-powder" id="tubePowder0"></div>
+              <div class="tube-precipitate" id="tubePrecip0"></div>
+            </div>
+            <span class="tube-label" id="tubeLabel0">Ống A</span>
+          </div>
+
+          <!-- Ống 1 -->
+          <div class="tube-unit" id="tubeUnit1" onclick="tapTube(1)">
+            <div class="dropper-anim-box" id="dropperBox1">
+              <span class="dropper-badge" id="dropperName1">BaCl₂</span>
+              <svg class="pipette-svg" viewBox="0 0 24 38">
+                <path d="M8 2 C8 0, 16 0, 16 2 L16 10 L8 10 Z" fill="#ef5350"/>
+                <rect x="9.5" y="10" width="5" height="16" fill="rgba(225,245,254,0.9)" stroke="#546e7a" stroke-width="1.3"/>
+                <path d="M9.5 26 L14.5 26 L12.8 35 L11.2 35 Z" fill="rgba(225,245,254,0.9)" stroke="#546e7a" stroke-width="1.2"/>
+              </svg>
+              <div class="falling-drop" id="fallingDrop1"></div>
+            </div>
+            <div class="tube-rim"></div>
+            <div class="tube-glass" id="tubeGlass1">
+              <div class="tube-water" id="tubeWater1"></div>
+              <div class="tube-powder" id="tubePowder1"></div>
+              <div class="tube-precipitate" id="tubePrecip1"></div>
+            </div>
+            <span class="tube-label" id="tubeLabel1">Ống B</span>
+          </div>
+
+          <!-- Ống 2 -->
+          <div class="tube-unit" id="tubeUnit2" onclick="tapTube(2)">
+            <div class="dropper-anim-box" id="dropperBox2">
+              <span class="dropper-badge" id="dropperName2">BaCl₂</span>
+              <svg class="pipette-svg" viewBox="0 0 24 38">
+                <path d="M8 2 C8 0, 16 0, 16 2 L16 10 L8 10 Z" fill="#ef5350"/>
+                <rect x="9.5" y="10" width="5" height="16" fill="rgba(225,245,254,0.9)" stroke="#546e7a" stroke-width="1.3"/>
+                <path d="M9.5 26 L14.5 26 L12.8 35 L11.2 35 Z" fill="rgba(225,245,254,0.9)" stroke="#546e7a" stroke-width="1.2"/>
+              </svg>
+              <div class="falling-drop" id="fallingDrop2"></div>
+            </div>
+            <div class="tube-rim"></div>
+            <div class="tube-glass" id="tubeGlass2">
+              <div class="tube-water" id="tubeWater2"></div>
+              <div class="tube-powder" id="tubePowder2"></div>
+              <div class="tube-precipitate" id="tubePrecip2"></div>
+            </div>
+            <span class="tube-label" id="tubeLabel2">Ống C</span>
+          </div>
+        </div>
+
+        <!-- Sân khấu đèn cồn -->
+        <div class="burner-stage" id="burnerStage">
+          <div class="metal-spoon" id="metalSpoon">
+            <div class="smoke-cloud" id="smokeCloud">💨</div>
+            <div class="spoon-head">
+              <div class="spoon-granule" id="spoonGranule"></div>
+            </div>
+            <div class="spoon-stick"></div>
+          </div>
+          <div class="lamp-body">
+            <div class="fire-flame" id="fireFlame"></div>
+            <div class="lamp-wick"></div>
+            <div class="lamp-fuel"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= THANH CÔNG CỤ ================= -->
+  <footer class="toolbar-footer">
+    <div class="tools-grid" id="toolsGrid"></div>
+  </footer>
+
+  <!-- ================= MÀN 0: NHẬP THÔNG TIN BẮT BUỘC ================= -->
+  <div class="overlay show" id="introModal">
+    <div class="dialog-box" style="text-align: center;">
+      <div style="font-size: 2.5rem; margin-bottom: 4px;">🏭🧪</div>
+      <h2>THÍ NGHIỆM ẢO: PHÂN BÓN HÓA HỌC</h2>
+      <p style="margin-bottom: 12px; font-size: 0.82rem; color: var(--muted);">
+        Bài 10 - Công nghệ 10 (Kết nối tri thức)<br>
+        Nhập đầy đủ thông tin bên dưới để vào phòng thí nghiệm.
+      </p>
+      
+      <div class="form-group">
+        <label>Họ và tên học sinh (*):</label>
+        <input type="text" id="studentNameInput" class="form-control" placeholder="Ví dụ: Nguyễn Văn An">
+      </div>
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label>Lớp (*):</label>
+        <input type="text" id="studentClassInput" class="form-control" placeholder="Ví dụ: 10A1">
+      </div>
+
+      <button class="cta-btn" onclick="startScreen0()">🚀 Bắt đầu thí nghiệm (100 điểm)</button>
+    </div>
+  </div>
+
+  <!-- ================= HỘP THOẠI THÔNG BÁO / GỢI Ý ================= -->
+  <div class="overlay" id="popupModal">
+    <div class="dialog-box">
+      <h2 id="popupTitle">🔎 Thông báo</h2>
+      <p id="popupBody">Nội dung...</p>
+      <button class="cta-btn" id="popupBtn" onclick="closePopup()">Tiếp tục</button>
+    </div>
+  </div>
+
+  <!-- ================= HỘP THOẠI CHỌN THUỐC THỬ ================= -->
+  <div class="overlay" id="reagentModal">
+    <div class="dialog-box">
+      <h2>🧴 Chọn thuốc thử</h2>
+      <p id="reagentPrompt">Chọn dung dịch thuốc thử để nhỏ vào ống nghiệm:</p>
+      <div class="reagent-picker" id="reagentList"></div>
+      <button class="cta-btn secondary" onclick="document.getElementById('reagentModal').classList.remove('show')">Đóng</button>
+    </div>
+  </div>
+
+  <!-- ================= HỘP THOẠI HƯỚNG DẪN ================= -->
+  <div class="overlay" id="helpModal">
+    <div class="dialog-box">
+      <h2>❓ Hướng Dẫn 4 Màn Thí Nghiệm</h2>
+      <p>
+        <b>- Màn 1 (25đ):</b> Hòa tan 3 mẫu A, B, C vào nước. Phân lân ít tan sẽ lắng cặn dưới đáy ống nghiệm. Kéo thả ống nghiệm vào đúng nhóm.<br>
+        <b>- Màn 2 (25đ):</b> Đốt 2 mẫu còn lại trên đèn cồn. Đạm bốc khói trắng, mùi khai; Kali lửa tím, nổ lép bép. Kéo thả lọ vào đúng ô.<br>
+        <b>- Màn 3 (30đ):</b> Phân biệt 3 loại đạm bằng thuốc thử đặc trưng rồi kéo thả.<br>
+        <b>- Màn 4 (20đ):</b> Phân biệt 2 loại kali bằng dung dịch BaCl₂ rồi kéo thả.<br>
+        <i>Lưu ý: Mỗi lần xác nhận sai sẽ bị trừ 3 điểm!</i>
+      </p>
+      <button class="cta-btn" onclick="document.getElementById('helpModal').classList.remove('show')">Đã hiểu</button>
+    </div>
+  </div>
+
+  <!-- ================= PHIẾU KẾT QUẢ CUỐI BÀI ================= -->
+  <div class="overlay" id="finalModal">
+    <div class="dialog-box" style="max-height: 92dvh;">
+      <div style="text-align: center; font-size: 2rem;">🏆</div>
+      <h2 style="text-align: center; margin-bottom: 6px;">PHIẾU KẾT QUẢ THÍ NGHIỆM</h2>
+      
+      <div style="background: #f4fbf5; border: 2px solid var(--primary); border-radius: 12px; padding: 10px; margin-bottom: 10px; font-size: 0.82rem; line-height: 1.45;">
+        <div>👤 <b>Họ và tên:</b> <span id="resName" style="color:var(--primary); font-weight:700;">-</span></div>
+        <div>🏫 <b>Lớp:</b> <span id="resClass" style="color:var(--primary); font-weight:700;">-</span></div>
+        <div>📊 <b>Điểm từng màn:</b> <span id="resSubScores">-</span></div>
+        <div>🎯 <b>Tổng điểm:</b> <span id="resTotalScore" style="color:#d84315; font-weight:800; font-size:0.95rem;">-</span></div>
+        <div>🏅 <b>Xếp loại:</b> <span id="resRank" style="color:var(--primary); font-weight:800;">-</span></div>
+        <div>⏱ <b>Thời gian:</b> <span id="resTime">-</span> | 📅 <span id="resDate">-</span></div>
+        <div style="margin-top:4px; padding-top:4px; border-top:1px dashed #a5d6a7;">
+          📝 <b>Nhận xét:</b> <span id="resComment" style="font-style:italic; color:#263238;">-</span>
+        </div>
+      </div>
+
+      <table class="summary-table" id="finalTable"></table>
+      
+      <button class="cta-btn blue-btn" onclick="downloadResultPNG()">📥 Tải Phiếu Kết Quả (Ảnh PNG)</button>
+      <button class="cta-btn secondary" onclick="resetAllToStart()">🔄 Làm lại bài thí nghiệm mới</button>
+    </div>
+  </div>
+
+<script>
+  /* =========================================================================
+     1. HỆ THỐNG ÂM THANH TỔNG HỢP (WEB AUDIO API - CHẠY OFFLINE)
+     ========================================================================= */
+  let audioEnabled = true;
+  let audioCtx = null;
+
+  function ensureAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+  }
+
+  function toggleAudio() {
+    audioEnabled = !audioEnabled;
+    document.getElementById('audioBtn').innerText = audioEnabled ? '🔊' : '🔇';
+  }
+
+  function playSFX(type) {
+    if (!audioEnabled) return;
+    ensureAudio();
+    const now = audioCtx.currentTime;
+
+    if (type === 'tap') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(750, now);
+      osc.frequency.exponentialRampToValueAtTime(320, now + 0.08);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.09);
+    } else if (type === 'drop') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, now);
+      osc.frequency.exponentialRampToValueAtTime(980, now + 0.14);
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.16);
+    } else if (type === 'water') {
+      const bufferSize = audioCtx.sampleRate * 0.5;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.sin((i / bufferSize) * Math.PI) * 0.25;
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'bandpass'; filter.frequency.setValueAtTime(450, now);
+      noise.connect(filter); filter.connect(audioCtx.destination);
+      noise.start(now);
+    } else if (type === 'shake') {
+      const bufferSize = audioCtx.sampleRate * 1.2;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * 0.2 * Math.abs(Math.sin((i / bufferSize) * Math.PI * 7));
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      noise.connect(audioCtx.destination);
+      noise.start(now);
+    } else if (type === 'fire' || type === 'crackle') {
+      const duration = 1.3;
+      const bufferSize = audioCtx.sampleRate * duration;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        let val = (Math.random() * 2 - 1) * 0.08;
+        if (type === 'crackle' && Math.random() < 0.006) val = (Math.random() * 2 - 1) * 0.85;
+        data[i] = val;
+      }
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+      noise.connect(audioCtx.destination);
+      noise.start(now);
+    } else if (type === 'success') {
+      [523.25, 659.25, 783.99].forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        gain.gain.setValueAtTime(0.18, now + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.08 + 0.22);
+        osc.connect(gain); gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.08); osc.stop(now + idx * 0.08 + 0.24);
+      });
+    } else if (type === 'error') {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, now);
+      gain.gain.setValueAtTime(0.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now); osc.stop(now + 0.26);
+    }
+  }
+
+  /* =========================================================================
+     2. BIẾN TRẠNG THÁI TOÀN CỤC & ĐIỂM SỐ
+     ========================================================================= */
+  let studentInfo = { name: '', className: '' };
+  let startTime = 0;
+  let timerInterval = null;
+  let finalReportData = {};
+
+  let scores = { s1: 25, s2: 25, s3: 30, s4: 20 };
+  let currentScreen = 0;
+
+  let bottles = { A: 'lan', B: 'dam', C: 'kali' };
+  let tubeCategoriesPart1 = ['lan', 'dam', 'kali'];
+  let tubeDamTypesPart3 = ['NH4NO3', '(NH4)2SO4', 'NH4Cl'];
+  let tubeKaliTypesPart4 = ['K2SO4', 'KCl'];
+
+  let phase = '';
+  let activeTool = null;
+  let sampledBottles = { A: false, B: false, C: false };
+  let identifiedBottles = { A: null, B: null, C: null };
+  let remainingTwo = [];
+  let currentBurnBottle = null;
+  let burnedBottlesPart2 = {};
+  let spoonHasSample = false;
+  let lampLit = false;
+
+  let currentReagent = null;
+  let testedTubes3 = [false, false, false];
+  let testedTubes4 = [false, false];
+
+  let dragMode = null;
+  let sortedCount = 0;
+  let dragState = null;
+  let popupCallback = null;
+
+  /* =========================================================================
+     3. CÁC HÀM TIỆN ÍCH GIAO DIỆN & ĐIỂM SỐ
+     ========================================================================= */
+  function deductScore(screenNum, points) {
+    if (screenNum === 1) scores.s1 = Math.max(0, scores.s1 - points);
+    if (screenNum === 2) scores.s2 = Math.max(0, scores.s2 - points);
+    if (screenNum === 3) scores.s3 = Math.max(0, scores.s3 - points);
+    if (screenNum === 4) scores.s4 = Math.max(0, scores.s4 - points);
+    updateScoreDisplay();
+  }
+
+  function updateScoreDisplay() {
+    const total = scores.s1 + scores.s2 + scores.s3 + scores.s4;
+    document.getElementById('totalScoreDisplay').innerText = total;
+  }
+
+  function updateTimer() {
+    const sec = Math.floor((Date.now() - startTime) / 1000);
+    const m = String(Math.floor(sec / 60)).padStart(2, '0');
+    const s = String(sec % 60).padStart(2, '0');
+    document.getElementById('timerText').innerText = `⏱ ${m}:${s}`;
+  }
+
+  function setStepper(stepNum) {
+    currentScreen = stepNum;
+    [1, 2, 3, 4].forEach(i => {
+      const el = document.getElementById('tab' + i);
+      el.classList.remove('active', 'done');
+      if (i < stepNum) el.classList.add('done');
+      if (i === stepNum) el.classList.add('active');
+    });
+  }
+
+  function setMission(code, text) {
+    document.getElementById('stepCode').innerText = code;
+    document.getElementById('missionText').innerHTML = text;
+  }
+
+  function showPhenomenon(text) {
+    const tag = document.getElementById('phenomenonTag');
+    tag.innerText = text;
+    tag.style.display = 'block';
+  }
+
+  function showCurrentHint() {
+    playSFX('tap');
+    let hintText = '';
+    if (currentScreen === 1) {
+      hintText = '💡 <b>Gợi ý Màn 1:</b><br>- Phân lân (superphosphate, phân lân nung chảy) rất ít tan hoặc không tan trong nước nên sẽ <b>lắng cặn đục dưới đáy ống nghiệm</b>.<br>- Phân đạm và phân kali đều tan hoàn toàn tạo dung dịch trong suốt.';
+    } else if (currentScreen === 2) {
+      hintText = '💡 <b>Gợi ý Màn 2:</b><br>- Khi đốt trên ngọn lửa đèn cồn: <b>Phân đạm</b> phân hủy tạo khói trắng và có mùi khai hắc.<br>- <b>Phân kali</b> cháy cho ngọn lửa màu tím đặc trưng và phát tiếng nổ lép bép.';
+    } else if (currentScreen === 3) {
+      hintText = '💡 <b>Gợi ý Màn 3:</b><br>- Nhỏ <b>Diphenylamine</b>: <b>NH₄NO₃</b> chuyển sang màu <b>xanh thẫm</b>.<br>- Nhỏ <b>BaCl₂</b>: <b>(NH₄)₂SO₄</b> xuất hiện <b>kết tủa trắng</b> BaSO₄.<br>- Nhỏ <b>AgNO₃</b>: <b>NH₄Cl</b> xuất hiện <b>kết tủa trắng</b> AgCl.';
+    } else if (currentScreen === 4) {
+      hintText = '💡 <b>Gợi ý Màn 4:</b><br>- Nhỏ dung dịch <b>BaCl₂</b> vào 2 ống kali:<br>+ Ống tạo <b>kết tủa trắng</b> (BaSO₄) là <b>K₂SO₄</b>.<br>+ Ống <b>không có kết tủa</b> là <b>KCl</b>.';
+    }
+    showPopup('💡 Gợi Ý Kiến Thức SGK', hintText, 'Đã hiểu', null);
+  }
+
+  function showPopup(title, body, btnText, callback) {
+    document.getElementById('popupTitle').innerText = title;
+    document.getElementById('popupBody').innerHTML = body;
+    document.getElementById('popupBtn').innerText = btnText;
+    popupCallback = callback;
+    document.getElementById('popupModal').classList.add('show');
+  }
+
+  function closePopup() {
+    document.getElementById('popupModal').classList.remove('show');
+    if (popupCallback) {
+      const cb = popupCallback;
+      popupCallback = null;
+      cb();
+    }
+  }
+
+  function openHelpModal() { document.getElementById('helpModal').classList.add('show'); }
+
+  function confirmReset() {
+    if (confirm('Em muốn làm lại từ đầu? Mọi tiến trình hiện tại sẽ bị xóa.')) {
+      resetAllToStart();
+    }
+  }
+
+  function resetAllToStart() {
+    clearInterval(timerInterval);
+    document.getElementById('finalModal').classList.remove('show');
+    document.getElementById('introModal').classList.add('show');
+  }
+
+  /* =========================================================================
+     4. MÀN (0): NHẬP HỌ TÊN + LỚP BẮT BUỘC & KHỞI TẠO DỮ LIỆU
+     ========================================================================= */
+  function startScreen0() {
+    const nameVal = document.getElementById('studentNameInput').value.trim();
+    const classVal = document.getElementById('studentClassInput').value.trim();
+
+    if (!nameVal || !classVal) {
+      playSFX('error');
+      alert('⚠️ Bắt buộc: Em vui lòng nhập đầy đủ Họ tên và Lớp trước khi vào phòng thí nghiệm!');
+      return;
+    }
+
+    studentInfo.name = nameVal;
+    studentInfo.className = classVal;
+    document.getElementById('introModal').classList.remove('show');
+    document.getElementById('subModeText').innerText = `HS: ${studentInfo.name} - Lớp: ${studentInfo.className}`;
+
+    scores = { s1: 25, s2: 25, s3: 30, s4: 20 };
+    updateScoreDisplay();
+
+    const types = ['lan', 'dam', 'kali'].sort(() => Math.random() - 0.5);
+    bottles = { A: types[0], B: types[1], C: types[2] };
+    tubeCategoriesPart1 = [bottles.A, bottles.B, bottles.C];
+
+    tubeDamTypesPart3 = ['NH4NO3', '(NH4)2SO4', 'NH4Cl'].sort(() => Math.random() - 0.5);
+    tubeKaliTypesPart4 = ['K2SO4', 'KCl'].sort(() => Math.random() - 0.5);
+
+    startTime = Date.now();
+    clearInterval(timerInterval);
+    timerInterval = setInterval(updateTimer, 1000);
+    playSFX('tap');
+
+    initScreen1();
+  }
+
+  /* =========================================================================
+     5. MÀN (1): THỬ TÍNH TAN TRONG NƯỚC & NHẬN BIẾT PHÂN LÂN
+     ========================================================================= */
+  function initScreen1() {
+    setStepper(1);
+    phase = '1.SAMPLE';
+    activeTool = null;
+    dragMode = null;
+    sortedCount = 0;
+    sampledBottles = { A: false, B: false, C: false };
+    identifiedBottles = { A: null, B: null, C: null };
+
+    ['A', 'B', 'C'].forEach((id, idx) => {
+      const card = document.getElementById('bottle' + id);
+      card.className = 'bottle-card';
+      card.style.opacity = '1';
+      const badge = document.getElementById('badge' + id);
+      badge.className = 'bottle-badge';
+      badge.innerText = '';
+
+      const unit = document.getElementById('tubeUnit' + idx);
+      unit.style.display = 'flex';
+      unit.style.opacity = '1';
+      unit.classList.remove('draggable-ready', 'sorted-done');
+      document.getElementById('dropperBox' + idx).classList.remove('active');
+      document.getElementById('tubeWater' + idx).style.height = '0%';
+      document.getElementById('tubeWater' + idx).style.backgroundColor = 'rgba(129, 212, 250, 0.55)';
+      document.getElementById('tubePowder' + idx).style.opacity = '0';
+      document.getElementById('tubePrecip' + idx).style.height = '0%';
+      document.getElementById('tubeLabel' + idx).innerText = 'Ống ' + id;
+    });
+
+    document.getElementById('bottlesShelf').style.display = 'grid';
+    document.getElementById('dropZonesBar').style.display = 'none';
+    document.getElementById('tubesRack').style.display = 'flex';
+    document.getElementById('burnerStage').style.display = 'none';
+    document.getElementById('phenomenonTag').style.display = 'none';
+
+    document.getElementById('toolsGrid').innerHTML = `
+      <button class="touch-tool" id="tool_spoon" onclick="chooseToolScreen1('spoon')">
+        <span class="t-ico">🥄</span><span>Lấy mẫu</span>
+      </button>
+      <button class="touch-tool" id="tool_water" onclick="chooseToolScreen1('water')">
+        <span class="t-ico">💧</span><span>Nước cất</span>
+      </button>
+      <button class="touch-tool" id="tool_shake" onclick="chooseToolScreen1('shake')">
+        <span class="t-ico">🌀</span><span>Lắc đều</span>
+      </button>
+      <button class="touch-tool" disabled>
+        <span class="t-ico">🔥</span><span>Đèn cồn</span>
+      </button>
+    `;
+
+    setMission(
+      'MÀN 1 (25 ĐIỂM) - THỬ TÍNH TAN TRONG NƯỚC',
+      'Bước 1: Bấm <b>🥄 Lấy mẫu</b> rồi chạm lần lượt vào 3 lọ <b>A, B, C</b> để cho phân bón vào ống nghiệm.'
+    );
+  }
+
+  function chooseToolScreen1(tool) {
+    activeTool = tool;
+    document.querySelectorAll('.touch-tool').forEach(b => b.classList.remove('selected-tool'));
+    document.getElementById('tool_' + tool).classList.add('selected-tool');
+    playSFX('tap');
+
+    if (phase === '1.WATER' && tool === 'water') {
+      [0, 1, 2].forEach(i => document.getElementById('tubeWater' + i).style.height = '65%');
+      playSFX('water');
+      showPhenomenon('💧 Đã thêm 5–10 mL nước cất vào 3 ống nghiệm');
+      phase = '1.SHAKE';
+      activeTool = null;
+      document.querySelectorAll('.touch-tool').forEach(b => b.classList.remove('selected-tool'));
+      setMission('MÀN 1 - LẮC HÒA TAN', 'Bước 3: Bấm <b>🌀 Lắc đều</b> để quan sát độ tan của từng loại phân bón.');
+    } else if (phase === '1.SHAKE' && tool === 'shake') {
+      playSFX('shake');
+      showPhenomenon('🌀 Đang lắc đều và để lắng 1–2 phút...');
+      [0, 1, 2].forEach(i => document.getElementById('tubeGlass' + i).classList.add('shaking'));
+
+      setTimeout(() => {
+        [0, 1, 2].forEach(i => document.getElementById('tubeGlass' + i).classList.remove('shaking'));
+
+        ['A', 'B', 'C'].forEach((id, idx) => {
+          if (bottles[id] === 'lan') {
+            const powder = document.getElementById('tubePowder' + idx);
+            powder.style.bottom = '0px';
+            powder.style.width = '100%';
+            powder.style.height = '28%';
+            powder.style.borderRadius = '0 0 22px 22px';
+            powder.style.backgroundColor = '#8d6e63';
+            powder.style.opacity = '0.95';
+            document.getElementById('tubeWater' + idx).style.backgroundColor = 'rgba(141, 110, 99, 0.3)';
+            const precip = document.getElementById('tubePrecip' + idx);
+            precip.style.background = 'linear-gradient(to top, #6d4c41 55%, rgba(161, 136, 127, 0.85) 100%)';
+            precip.style.height = '32%';
+          } else {
+            document.getElementById('tubePowder' + idx).style.opacity = '0';
+            document.getElementById('tubeWater' + idx).style.backgroundColor = 'rgba(225, 245, 254, 0.5)';
+          }
+        });
+
+        activeTool = null;
+        document.querySelectorAll('.touch-tool').forEach(b => b.classList.remove('selected-tool'));
+        activateDragScreen1();
+      }, 1400);
+    }
+  }
+
+  function activateDragScreen1() {
+    phase = '1.SORT';
+    dragMode = 'tube';
+    sortedCount = 0;
+
+    document.getElementById('bottlesShelf').style.display = 'none';
+    const dropBar = document.getElementById('dropZonesBar');
+    dropBar.className = 'drop-zones-bar';
+    dropBar.style.display = 'grid';
+    dropBar.innerHTML = `
+      <div class="drop-target" data-accept="lan">
+        <span class="drop-target-title">🟤 PHÂN LÂN</span>
+        <span class="drop-target-sub">Kéo ống ít tan / lắng cặn đáy</span>
+      </div>
+      <div class="drop-target" data-accept="soluble">
+        <span class="drop-target-title">💧 NHÓM ĐẠM / KALI</span>
+        <span class="drop-target-sub">Kéo 2 ống tan hoàn toàn</span>
+      </div>
+    `;
+
+    [0, 1, 2].forEach(i => document.getElementById('tubeUnit' + i).classList.add('draggable-ready'));
+    showPhenomenon('👆 Kéo thả từng ống nghiệm vào đúng nhóm ở trên!');
+    setMission('MÀN 1 - KÉO THẢ GÁN NHÃN', 'Dùng ngón tay <b>kéo từng ống nghiệm (A, B, C)</b> thả vào đúng ô phân loại.');
+  }
+
+  /* =========================================================================
+     6. MÀN (2): ĐỐT TRÊN ĐÈN CỒN XÁC ĐỊNH PHÂN ĐẠM & PHÂN KALI
+     ========================================================================= */
+  function initScreen2() {
+    setStepper(2);
+    phase = '2.SAMPLE';
+    burnedBottlesPart2 = {};
+    spoonHasSample = false;
+    lampLit = false;
+    dragMode = null;
+
+    document.getElementById('dropZonesBar').style.display = 'none';
+    document.getElementById('bottlesShelf').style.display = 'grid';
+    document.getElementById('tubesRack').style.display = 'none';
+    document.getElementById('burnerStage').style.display = 'flex';
+    document.getElementById('phenomenonTag').style.display = 'none';
+    document.getElementById('fireFlame').classList.remove('lit', 'purple-flame');
+
+    document.getElementById('toolsGrid').innerHTML = `
+      <button class="touch-tool" id="tool_spoon" onclick="chooseToolScreen2('spoon')">
+        <span class="t-ico">🥄</span><span>Lấy mẫu</span>
+      </button>
+      <button class="touch-tool" id="tool_burner" onclick="chooseToolScreen2('burner')">
+        <span class="t-ico">🔥</span><span>Bật đèn</span>
+      </button>
+      <button class="touch-tool" id="tool_heat" onclick="heatSpoonScreen2()" style="grid-column: span 2;">
+        <span class="t-ico">♨️</span><span>Đưa thìa lên ngọn lửa</span>
+      </button>
+    `;
+
+    setMission(
+      `MÀN 2 (25 ĐIỂM) - THỬ TRÊN ĐÈN CỒN`,
+      `Hai lọ tan trong nước là <b>${remainingTwo[0]}</b> và <b>${remainingTwo[1]}</b>. Bấm <b>🥄 Lấy mẫu</b> rồi chạm vào 1 trong 2 lọ để thử lửa.`
+    );
+  }
+
+  function chooseToolScreen2(tool) {
+    activeTool = tool;
+    document.querySelectorAll('.touch-tool').forEach(b => b.classList.remove('selected-tool'));
+    document.getElementById('tool_' + tool).classList.add('selected-tool');
+    playSFX('tap');
+
+    if (phase === '2.BURNER' && tool === 'burner') {
+      if (!spoonHasSample) {
+        playSFX('error');
+        alert('Hãy lấy mẫu phân bón lên thìa trước khi bật đèn cồn!');
+        return;
+      }
+      lampLit = true;
+      document.getElementById('fireFlame').classList.add('lit');
+      playSFX('fire');
+      showPhenomenon('🔥 Ngọn lửa đèn cồn đã cháy');
+      phase = '2.HEAT';
+      activeTool = null;
+      document.querySelectorAll('.touch-tool').forEach(b => b.classList.remove('selected-tool'));
+      setMission('MÀN 2 - HƠ LỬA', 'Bấm nút <b>♨️ Đưa thìa lên ngọn lửa</b> để quan sát hiện tượng.');
+    }
+  }
+
+  function heatSpoonScreen2() {
+    if (phase !== '2.HEAT' || !spoonHasSample || !lampLit) {
+      playSFX('error');
+      alert('Hãy lấy mẫu lên thìa và bật đèn cồn trước!');
+      return;
+    }
+
+    const spoon = document.getElementById('metalSpoon');
+    const flame = document.getElementById('fireFlame');
+    const smoke = document.getElementById('smokeCloud');
+    spoon.classList.add('over-fire');
+
+    const type = bottles[currentBurnBottle];
+    playSFX(type === 'kali' ? 'crackle' : 'fire');
+
+    setTimeout(() => {
+      if (type === 'dam') {
+        smoke.classList.add('smoke-active');
+        showPhenomenon(`💨 Lọ ${currentBurnBottle}: Bốc khói trắng, có mùi khai hắc!`);
+      } else {
+        flame.classList.add('purple-flame');
+        showPhenomenon(`🟣 Lọ ${currentBurnBottle}: Ngọn lửa màu tím, nổ lép bép!`);
+      }
+
+      setTimeout(() => {
+        burnedBottlesPart2[currentBurnBottle] = type;
+        document.getElementById('bottle' + currentBurnBottle).classList.remove('selected');
+        spoon.classList.remove('over-fire');
+        smoke.classList.remove('smoke-active');
+        flame.classList.remove('purple-flame');
+        document.getElementById('spoonGranule').style.display = 'none';
+        spoonHasSample = false;
+
+        const unburned = remainingTwo.filter(id => !burnedBottlesPart2[id]);
+        playSFX('success');
+
+        if (unburned.length > 0) {
+          showPopup(
+            `🔎 Đã đốt thử Lọ ${currentBurnBottle}`,
+            `Em đã quan sát xong hiện tượng của <b>Lọ ${currentBurnBottle}</b>.<br>Tiếp theo hãy lấy mẫu <b>Lọ ${unburned[0]}</b> để đốt thử nốt trước khi kéo thả phân loại!`,
+            `Thử tiếp Lọ ${unburned[0]}`,
+            () => {
+              phase = '2.SAMPLE';
+              setMission('MÀN 2 - THỬ LỌ CÒN LẠI', `Bấm <b>🥄 Lấy mẫu</b> rồi chạm vào <b>Lọ ${unburned[0]}</b>.`);
+            }
+          );
+        } else {
+          activateDragScreen2();
+        }
+      }, 1300);
+    }, 450);
+  }
+
+  function activateDragScreen2() {
+    phase = '2.SORT';
+    dragMode = 'bottle';
+    sortedCount = 0;
+
+    document.getElementById('burnerStage').style.display = 'none';
+    const dropBar = document.getElementById('dropZonesBar');
+    dropBar.className = 'drop-zones-bar';
+    dropBar.style.display = 'grid';
+    dropBar.innerHTML = `
+      <div class="drop-target" data-accept="dam">
+        <span class="drop-target-title">🌿 PHÂN ĐẠM</span>
+        <span class="drop-target-sub">Khói trắng, mùi khai hắc</span>
+      </div>
+      <div class="drop-target" data-accept="kali">
+        <span class="drop-target-title">🟣 PHÂN KALI</span>
+        <span class="drop-target-sub">Ngọn lửa tím, nổ lép bép</span>
+      </div>
+    `;
+
+    remainingTwo.forEach(id => document.getElementById('bottle' + id).classList.add('draggable-ready'));
+    showPhenomenon(`👆 Kéo thả Lọ ${remainingTwo[0]} và Lọ ${remainingTwo[1]} vào đúng loại phân!`);
+    setMission('MÀN 2 - KÉO THẢ GÁN NHÃN', `Dùng ngón tay <b>kéo Lọ ${remainingTwo[0]} và Lọ ${remainingTwo[1]}</b> thả vào đúng ô bên dưới.`);
+  }
+
+  /* =========================================================================
+     7. MÀN (3): PHÂN BIỆT 3 LOẠI PHÂN ĐẠM BẰNG THUỐC THỬ
+     ========================================================================= */
+  function initScreen3() {
+    setStepper(3);
+    phase = '3.TEST';
+    dragMode = null;
+    currentReagent = null;
+    testedTubes3 = [false, false, false];
+
+    document.getElementById('bottlesShelf').style.display = 'none';
+    document.getElementById('burnerStage').style.display = 'none';
+    document.getElementById('tubesRack').style.display = 'flex';
+    document.getElementById('phenomenonTag').style.display = 'none';
+
+    const dropBar = document.getElementById('dropZonesBar');
+    dropBar.className = 'drop-zones-bar three-cols';
+    dropBar.style.display = 'grid';
+    dropBar.innerHTML = `
+      <div class="drop-target" data-accept="NH4NO3">
+        <span class="drop-target-title">NH₄NO₃</span>
+        <span class="drop-target-sub">Chờ thử nghiệm</span>
+      </div>
+      <div class="drop-target" data-accept="(NH4)2SO4">
+        <span class="drop-target-title">(NH₄)₂SO₄</span>
+        <span class="drop-target-sub">Chờ thử nghiệm</span>
+      </div>
+      <div class="drop-target" data-accept="NH4Cl">
+        <span class="drop-target-title">NH₄Cl</span>
+        <span class="drop-target-sub">Chờ thử nghiệm</span>
+      </div>
+    `;
+
+    [0, 1, 2].forEach(idx => {
+      const unit = document.getElementById('tubeUnit' + idx);
+      unit.style.display = 'flex';
+      unit.style.opacity = '1';
+      unit.classList.remove('draggable-ready', 'sorted-done');
+      document.getElementById('tubeWater' + idx).style.height = '65%';
+      document.getElementById('tubeWater' + idx).style.backgroundColor = 'rgba(225, 245, 254, 0.55)';
+      document.getElementById('tubePowder' + idx).style.opacity = '0';
+      const precip = document.getElementById('tubePrecip' + idx);
+      precip.style.background = 'radial-gradient(circle at 20% 30%, #ffffff 4px, transparent 5px), linear-gradient(to top, rgba(255,255,255,0.98) 70%, rgba(235,245,255,0.9) 100%)';
+      precip.style.height = '0%';
+      document.getElementById('tubeLabel' + idx).innerText = 'Ống Đạm ' + (idx + 1);
+    });
+
+    document.getElementById('toolsGrid').innerHTML = `
+      <button class="touch-tool" onclick="openReagentPicker()" style="grid-column: span 4; background:#e1f5fe; border-color:#0288d1; color:#01579b;">
+        <span class="t-ico">🧴</span><span>Chọn Thuốc Thử (Diphenylamine / BaCl₂ / AgNO₃)</span>
+      </button>
+    `;
+
+    setMission(
+      'MÀN 3 (30 ĐIỂM) - PHÂN BIỆT 3 LOẠI PHÂN ĐẠM',
+      'Bấm <b>🧴 Chọn Thuốc Thử</b> rồi chạm vào từng ống nghiệm để nhận biết <b>NH₄NO₃, (NH₄)₂SO₄, NH₄Cl</b>.'
+    );
+  }
+
+  /* =========================================================================
+     8. MÀN (4): PHÂN BIỆT 2 LOẠI PHÂN KALI (K₂SO₄ VÀ KCl) BẰNG BaCl₂
+     ========================================================================= */
+  function initScreen4() {
+    setStepper(4);
+    phase = '4.TEST';
+    dragMode = null;
+    currentReagent = null;
+    testedTubes4 = [false, false];
+
+    document.getElementById('phenomenonTag').style.display = 'none';
+
+    const dropBar = document.getElementById('dropZonesBar');
+    dropBar.className = 'drop-zones-bar';
+    dropBar.style.display = 'grid';
+    dropBar.innerHTML = `
+      <div class="drop-target" data-accept="K2SO4">
+        <span class="drop-target-title">K₂SO₄</span>
+        <span class="drop-target-sub">Chờ thử BaCl₂</span>
+      </div>
+      <div class="drop-target" data-accept="KCl">
+        <span class="drop-target-title">KCl</span>
+        <span class="drop-target-sub">Chờ thử BaCl₂</span>
+      </div>
+    `;
+
+    [0, 1].forEach(idx => {
+      const unit = document.getElementById('tubeUnit' + idx);
+      unit.style.display = 'flex';
+      unit.style.opacity = '1';
+      unit.classList.remove('draggable-ready', 'sorted-done');
+      document.getElementById('tubeWater' + idx).style.height = '65%';
+      document.getElementById('tubeWater' + idx).style.backgroundColor = 'rgba(225, 245, 254, 0.55)';
+      const precip = document.getElementById('tubePrecip' + idx);
+      precip.style.height = '0%';
+      document.getElementById('tubeLabel' + idx).innerText = 'Ống Kali ' + (idx + 1);
+    });
+    document.getElementById('tubeUnit2').style.display = 'none';
+
+    document.getElementById('toolsGrid').innerHTML = `
+      <button class="touch-tool" onclick="openReagentPicker()" style="grid-column: span 4; background:#e1f5fe; border-color:#0288d1; color:#01579b;">
+        <span class="t-ico">🧴</span><span>Chọn Thuốc Thử BaCl₂</span>
+      </button>
+    `;
+
+    setMission(
+      'MÀN 4 (20 ĐIỂM) - PHÂN BIỆT K₂SO₄ VÀ KCl',
+      'Bấm <b>🧴 Chọn Thuốc Thử BaCl₂</b>, nhỏ vào cả 2 ống rồi kéo thả ống nghiệm vào đúng tên muối.'
+    );
+  }
+
+  /* =========================================================================
+     9. XỬ LÝ CHẠM LỌ, CHẠM ỐNG NGHIỆM & KÉO THẢ
+     ========================================================================= */
+  function tapBottle(id) {
+    if (phase === '1.SAMPLE') {
+      if (activeTool !== 'spoon') { playSFX('error'); alert('Hãy bấm 🥄 Lấy mẫu ở thanh bên dưới trước!'); return; }
+      if (sampledBottles[id]) return;
+
+      sampledBottles[id] = true;
+      const idx = id === 'A' ? 0 : (id === 'B' ? 1 : 2);
+      const p = document.getElementById('tubePowder' + idx);
+      p.style.opacity = '1';
+      p.style.backgroundColor = bottles[id] === 'kali' ? '#ef5350' : (bottles[id] === 'lan' ? '#8d6e63' : '#eeeeee');
+      playSFX('tap');
+
+      if (sampledBottles.A && sampledBottles.B && sampledBottles.C) {
+        phase = '1.WATER';
+        activeTool = null;
+        document.querySelectorAll('.touch-tool').forEach(b => b.classList.remove('selected-tool'));
+        showPhenomenon('✅ Đã lấy đủ 3 mẫu vào ống nghiệm');
+        setMission('MÀN 1 - THÊM NƯỚC CẤT', 'Bước 2: Bấm <b>💧 Nước cất</b> để thêm nước vào cả 3 ống nghiệm.');
+      }
+    } else if (phase === '2.SAMPLE') {
+      if (identifiedBottles[id] || burnedBottlesPart2[id]) {
+        playSFX('error'); alert('Mẫu này đã xử lý xong, hãy chọn lọ chưa thử!'); return;
+      }
+      if (activeTool !== 'spoon') { playSFX('error'); alert('Hãy bấm 🥄 Lấy mẫu ở thanh bên dưới trước!'); return; }
+
+      currentBurnBottle = id;
+      spoonHasSample = true;
+      document.querySelectorAll('.bottle-card').forEach(c => c.classList.remove('selected'));
+      document.getElementById('bottle' + id).classList.add('selected');
+
+      const gran = document.getElementById('spoonGranule');
+      gran.style.display = 'block';
+      gran.style.backgroundColor = bottles[id] === 'kali' ? '#ef5350' : '#ffffff';
+      playSFX('tap');
+      showPhenomenon(`🥄 Đã lấy mẫu lọ ${id} lên thìa`);
+
+      if (!lampLit) {
+        phase = '2.BURNER';
+        activeTool = null;
+        document.querySelectorAll('.touch-tool').forEach(b => b.classList.remove('selected-tool'));
+        setMission('MÀN 2 - BẬT ĐÈN CỒN', 'Bấm <b>🔥 Bật đèn</b> để thắp sáng ngọn lửa.');
+      } else {
+        phase = '2.HEAT';
+        activeTool = null;
+        document.querySelectorAll('.touch-tool').forEach(b => b.classList.remove('selected-tool'));
+        setMission('MÀN 2 - HƠ LỬA', `Bấm <b>♨️ Đưa thìa lên ngọn lửa</b> để thử mẫu <b>Lọ ${id}</b>.`);
+      }
+    }
+  }
+
+  function openReagentPicker() {
+    if (dragMode) { alert('Đã thử thuốc thử xong! Hãy kéo từng ống nghiệm thả vào đúng ô ở trên.'); return; }
+    const list = document.getElementById('reagentList');
+    if (phase === '3.TEST') {
+      list.innerHTML = `
+        <button class="reagent-opt" onclick="selectReagent('Diphenylamine')"><span>💧 Dung dịch Diphenylamine</span><span>Nhận biết NH₄NO₃ (Xanh thẫm) →</span></button>
+        <button class="reagent-opt" onclick="selectReagent('BaCl₂')"><span>💧 Dung dịch BaCl₂</span><span>Nhận biết (NH₄)₂SO₄ (Tủa trắng) →</span></button>
+        <button class="reagent-opt" onclick="selectReagent('AgNO₃')"><span>💧 Dung dịch AgNO₃</span><span>Nhận biết NH₄Cl (Tủa trắng) →</span></button>
+      `;
+    } else if (phase === '4.TEST') {
+      list.innerHTML = `
+        <button class="reagent-opt" onclick="selectReagent('BaCl₂')"><span>💧 Dung dịch BaCl₂</span><span>Nhỏ vào 2 ống Kali →</span></button>
+      `;
+    }
+    document.getElementById('reagentModal').classList.add('show');
+  }
+
+  function selectReagent(r) {
+    currentReagent = r;
+    document.getElementById('reagentModal').classList.remove('show');
+    playSFX('tap');
+    showPhenomenon(`🧴 Đang cầm ${r} - Chạm vào ống nghiệm phù hợp để nhỏ giọt!`);
+  }
+
+  function tapTube(idx) {
+    if (phase !== '3.TEST' && phase !== '4.TEST') return;
+    if (!currentReagent) { playSFX('error'); alert('Hãy bấm chọn thuốc thử ở thanh bên dưới trước!'); return; }
+
+    const r = currentReagent;
+    const water = document.getElementById('tubeWater' + idx);
+    const precip = document.getElementById('tubePrecip' + idx);
+    const salt = phase === '3.TEST' ? tubeDamTypesPart3[idx] : tubeKaliTypesPart4[idx];
+
+    // Hiệu ứng nhỏ giọt
+    const box = document.getElementById('dropperBox' + idx);
+    document.getElementById('dropperName' + idx).innerText = r;
+    box.classList.add('active');
+    const dropEl = document.getElementById('fallingDrop' + idx);
+    dropEl.classList.remove('dropping'); void dropEl.offsetWidth; dropEl.classList.add('dropping');
+    playSFX('drop');
+
+    setTimeout(() => {
+      box.classList.remove('active');
+      if (phase === '3.TEST') {
+        if (r === 'Diphenylamine' && salt === 'NH4NO3') {
+          water.style.backgroundColor = '#1a237e';
+          precip.style.height = '0%';
+          showPhenomenon(`🔵 Ống Đạm ${idx + 1} (${salt}) + Diphenylamine: Dung dịch chuyển màu xanh thẫm!`);
+          testedTubes3[idx] = true;
+        } else if (r === 'BaCl₂' && salt === '(NH4)2SO4') {
+          precip.style.height = '50%';
+          water.style.backgroundColor = 'rgba(230, 240, 250, 0.7)';
+          showPhenomenon(`⚪ Ống Đạm ${idx + 1} (${salt}) + BaCl₂: Xuất hiện kết tủa trắng đục BaSO₄!`);
+          testedTubes3[idx] = true;
+        } else if (r === 'AgNO₃' && salt === 'NH4Cl') {
+          precip.style.height = '50%';
+          water.style.backgroundColor = 'rgba(230, 240, 250, 0.7)';
+          showPhenomenon(`⚪ Ống Đạm ${idx + 1} (${salt}) + AgNO₃: Xuất hiện kết tủa trắng AgCl!`);
+          testedTubes3[idx] = true;
+        } else {
+          showPhenomenon(`💧 Ống Đạm ${idx + 1} (${salt}) + ${r}: Không tạo phản ứng đặc trưng!`);
+        }
+
+        if (testedTubes3[0] && testedTubes3[1] && testedTubes3[2]) {
+          currentReagent = null;
+          phase = '3.SORT';
+          dragMode = 'tube';
+          sortedCount = 0;
+          document.querySelectorAll('#dropZonesBar .drop-target-sub').forEach(el => el.innerText = 'Kéo ống vào đây');
+          [0, 1, 2].forEach(i => document.getElementById('tubeUnit' + i).classList.add('draggable-ready'));
+          playSFX('success');
+          setMission('MÀN 3 - KÉO THẢ PHÂN LOẠI', 'Kéo từng ống nghiệm thả vào đúng tên muối <b>NH₄NO₃, (NH₄)₂SO₄, NH₄Cl</b> ở trên!');
+        }
+      } else if (phase === '4.TEST') {
+        testedTubes4[idx] = true;
+        if (salt === 'K2SO4' && r === 'BaCl₂') {
+          precip.style.height = '50%';
+          water.style.backgroundColor = 'rgba(230, 240, 250, 0.7)';
+          showPhenomenon(`⚪ Ống Kali ${idx + 1} (${salt}) + BaCl₂: Xuất hiện kết tủa trắng đục BaSO₄!`);
+        } else {
+          showPhenomenon(`💧 Ống Kali ${idx + 1} (${salt}) + BaCl₂: Dung dịch trong suốt, không kết tủa (KCl)!`);
+        }
+
+        if (testedTubes4[0] && testedTubes4[1]) {
+          currentReagent = null;
+          phase = '4.SORT';
+          dragMode = 'tube';
+          sortedCount = 0;
+          document.querySelectorAll('#dropZonesBar .drop-target-sub').forEach(el => el.innerText = 'Kéo ống vào đây');
+          [0, 1].forEach(i => document.getElementById('tubeUnit' + i).classList.add('draggable-ready'));
+          playSFX('success');
+          setMission('MÀN 4 - KÉO THẢ PHÂN LOẠI', 'Kéo 2 ống nghiệm thả vào đúng ô <b>K₂SO₄</b> (có kết tủa) và <b>KCl</b> (không kết tủa)!');
+        }
+      }
+    }, 550);
+  }
+
+  /* Cơ chế Kéo thả cảm ứng */
+  function setupDragAndDrop() {
+    [0, 1, 2].forEach(idx => {
+      const unit = document.getElementById('tubeUnit' + idx);
+      unit.addEventListener('pointerdown', (e) => {
+        if (dragMode !== 'tube' || unit.classList.contains('sorted-done')) return;
+        startDrag(e, 'tube', idx, unit);
+      });
+    });
+
+    ['A', 'B', 'C'].forEach(id => {
+      const card = document.getElementById('bottle' + id);
+      card.addEventListener('pointerdown', (e) => {
+        if (dragMode !== 'bottle' || card.classList.contains('sorted-done') || card.classList.contains('locked')) return;
+        startDrag(e, 'bottle', id, card);
+      });
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!dragState) return;
+      dragState.ghost.style.left = e.clientX + 'px';
+      dragState.ghost.style.top = e.clientY + 'px';
+      document.querySelectorAll('.drop-target').forEach(zone => {
+        const r = zone.getBoundingClientRect();
+        zone.classList.toggle('drag-over', e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom);
+      });
+    });
+
+    window.addEventListener('pointerup', (e) => {
+      if (!dragState) return;
+      const { kind, id, el, ghost } = dragState;
+      dragState = null;
+
+      let matchedZone = null;
+      document.querySelectorAll('.drop-target').forEach(zone => {
+        zone.classList.remove('drag-over');
+        const r = zone.getBoundingClientRect();
+        if (e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom) matchedZone = zone;
+      });
+
+      ghost.remove();
+      el.style.opacity = '1';
+      if (matchedZone) processDropResult(kind, id, matchedZone);
+    });
+  }
+
+  function startDrag(e, kind, id, el) {
+    e.preventDefault();
+    playSFX('tap');
+    const ghost = el.cloneNode(true);
+    ghost.classList.add('dragging-ghost');
+    ghost.style.width = el.offsetWidth + 'px';
+    ghost.style.left = e.clientX + 'px';
+    ghost.style.top = e.clientY + 'px';
+    document.body.appendChild(ghost);
+    el.style.opacity = '0.35';
+    dragState = { kind, id, el, ghost };
+  }
+
+  function processDropResult(kind, id, zone) {
+    const accept = zone.getAttribute('data-accept');
+
+    if (phase === '1.SORT' && kind === 'tube') {
+      const actual = tubeCategoriesPart1[id] === 'lan' ? 'lan' : 'soluble';
+      if (actual === accept) {
+        playSFX('success');
+        document.getElementById('tubeUnit' + id).classList.add('sorted-done');
+        sortedCount++;
+        const letter = ['A', 'B', 'C'][id];
+        if (actual === 'lan') {
+          zone.classList.add('matched');
+          zone.querySelector('.drop-target-sub').innerText = `✅ Ống ${letter}`;
+          identifiedBottles[letter] = 'lan';
+          const badge = document.getElementById('badge' + letter);
+          badge.innerText = '🟤 Phân Lân'; badge.classList.add('badge-lan');
+          document.getElementById('bottle' + letter).classList.add('locked');
+        } else {
+          const prev = zone.querySelector('.drop-target-sub').innerText;
+          const added = prev.includes('Ống') ? `${prev}, ${letter}` : `✅ Ống ${letter}`;
+          zone.querySelector('.drop-target-sub').innerText = added;
+          if (added.includes(',')) zone.classList.add('matched');
+        }
+
+        if (sortedCount === 3) {
+          dragMode = null;
+          const lanBottle = ['A', 'B', 'C'].find(b => bottles[b] === 'lan');
+          remainingTwo = ['A', 'B', 'C'].filter(b => b !== lanBottle);
+          setTimeout(() => {
+            showPopup('🎉 Hoàn Thành Màn 1!', `Em đã nhận biết đúng <b>Lọ ${lanBottle} là Phân Lân</b> (ít tan, lắng cặn).<br>Tiếp tục sang <b>Màn 2</b> để đốt thử 2 lọ còn lại!`, 'Sang Màn 2 →', initScreen2);
+          }, 350);
+        }
+      } else {
+        deductScore(1, 3);
+        playSFX('error');
+        zone.classList.add('wrong-shake');
+        setTimeout(() => zone.classList.remove('wrong-shake'), 400);
+        showPhenomenon('❌ Sai rồi (-3 điểm)! Phân lân ít tan sẽ lắng cặn đục dưới đáy.');
+      }
+      return;
+    }
+
+    if (phase === '2.SORT' && kind === 'bottle') {
+      const actual = bottles[id];
+      if (actual === accept) {
+        playSFX('success');
+        const card = document.getElementById('bottle' + id);
+        card.classList.remove('draggable-ready');
+        card.classList.add('sorted-done', 'locked');
+        identifiedBottles[id] = actual;
+        const badge = document.getElementById('badge' + id);
+        badge.innerText = actual === 'dam' ? '🌿 Phân Đạm' : '🟣 Phân Kali';
+        badge.classList.add(actual === 'dam' ? 'badge-dam' : 'badge-kali');
+        zone.classList.add('matched');
+        zone.querySelector('.drop-target-sub').innerText = `✅ Lọ ${id}`;
+        sortedCount++;
+
+        if (sortedCount === 2) {
+          dragMode = null;
+          setTimeout(() => {
+            showPopup('🎉 Hoàn Thành Màn 2!', 'Em đã xác định chính xác lọ Phân Đạm và lọ Phân Kali bằng ngọn lửa đèn cồn!<br>Tiếp tục sang <b>Màn 3</b> để phân biệt 3 loại phân đạm.', 'Sang Màn 3 →', initScreen3);
+          }, 350);
+        }
+      } else {
+        deductScore(2, 3);
+        playSFX('error');
+        zone.classList.add('wrong-shake');
+        setTimeout(() => zone.classList.remove('wrong-shake'), 400);
+        showPhenomenon('❌ Sai rồi (-3 điểm)! Nhớ lại hiện tượng khói trắng (đạm) và lửa tím (kali).');
+      }
+      return;
+    }
+
+    if (phase === '3.SORT' && kind === 'tube') {
+      const actualSalt = tubeDamTypesPart3[id];
+      if (actualSalt === accept) {
+        playSFX('success');
+        document.getElementById('tubeUnit' + id).classList.add('sorted-done');
+        zone.classList.add('matched');
+        zone.querySelector('.drop-target-sub').innerText = `✅ Ống ${id + 1}`;
+        sortedCount++;
+
+        if (sortedCount === 3) {
+          dragMode = null;
+          setTimeout(() => {
+            showPopup('🎉 Hoàn Thành Màn 3!', 'Em đã phân biệt chuẩn xác 3 loại phân đạm NH₄NO₃, (NH₄)₂SO₄ và NH₄Cl!<br>Tiếp tục sang <b>Màn 4</b> (màn cuối) để phân biệt 2 loại phân kali.', 'Sang Màn 4 →', initScreen4);
+          }, 350);
+        }
+      } else {
+        deductScore(3, 3);
+        playSFX('error');
+        zone.classList.add('wrong-shake');
+        setTimeout(() => zone.classList.remove('wrong-shake'), 400);
+        showPhenomenon('❌ Sai rồi (-3 điểm)! Kiểm tra lại màu xanh thẫm hoặc kết tủa trắng.');
+      }
+      return;
+    }
+
+    if (phase === '4.SORT' && kind === 'tube') {
+      const actualSalt = tubeKaliTypesPart4[id];
+      if (actualSalt === accept) {
+        playSFX('success');
+        document.getElementById('tubeUnit' + id).classList.add('sorted-done');
+        zone.classList.add('matched');
+        zone.querySelector('.drop-target-sub').innerText = `✅ Ống ${id + 1}`;
+        sortedCount++;
+
+        if (sortedCount === 2) {
+          dragMode = null;
+          setTimeout(finishAllScreens, 400);
+        }
+      } else {
+        deductScore(4, 3);
+        playSFX('error');
+        zone.classList.add('wrong-shake');
+        setTimeout(() => zone.classList.remove('wrong-shake'), 400);
+        showPhenomenon('❌ Sai rồi (-3 điểm)! K₂SO₄ tạo kết tủa trắng với BaCl₂, còn KCl thì không.');
+      }
+    }
+  }
+
+  /* =========================================================================
+     10. TỔNG KẾT & XUẤT PHIẾU KẾT QUẢ DẠNG ẢNH PNG (CANVAS API THUẦN)
+     ========================================================================= */
+  function finishAllScreens() {
+    clearInterval(timerInterval);
+    playSFX('success');
+
+    const elapsedSec = Math.floor((Date.now() - startTime) / 1000);
+    const m = Math.floor(elapsedSec / 60);
+    const s = elapsedSec % 60;
+    const timeStr = (m > 0 ? m + ' phút ' : '') + s + ' giây';
+
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('vi-VN') + ' ' + now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+
+    const total = scores.s1 + scores.s2 + scores.s3 + scores.s4;
+    let rank = 'Xuất sắc';
+    let comment = 'Nắm vững kiến thức thực hành Bài 10, thao tác thí nghiệm chuẩn xác!';
+    if (total >= 80 && total < 90) {
+      rank = 'Giỏi';
+      comment = 'Hoàn thành tốt các bước nhận biết phân bón, cần cẩn thận hơn ở một vài thao tác.';
+    } else if (total >= 65 && total < 80) {
+      rank = 'Khá';
+      comment = 'Hiểu được quy trình nhận biết nhưng còn nhầm lẫn hiện tượng hóa học.';
+    } else if (total < 65) {
+      rank = 'Cần cố gắng';
+      comment = 'Cần ôn tập kỹ lý thuyết tính chất hóa học của phân đạm, lân, kali và thực hành lại.';
+    }
+
+    const nameMap = { lan: 'Phân Lân', dam: 'Phân Đạm', kali: 'Phân Kali' };
+    finalReportData = {
+      name: studentInfo.name,
+      className: studentInfo.className,
+      subScores: `M1: ${scores.s1}/25 | M2: ${scores.s2}/25 | M3: ${scores.s3}/30 | M4: ${scores.s4}/20`,
+      total: `${total} / 100 điểm`,
+      rank: rank,
+      time: timeStr,
+      date: dateStr,
+      comment: comment,
+      bottleA: nameMap[bottles.A],
+      bottleB: nameMap[bottles.B],
+      bottleC: nameMap[bottles.C]
+    };
+
+    document.getElementById('resName').innerText = finalReportData.name;
+    document.getElementById('resClass').innerText = finalReportData.className;
+    document.getElementById('resSubScores').innerText = finalReportData.subScores;
+    document.getElementById('resTotalScore').innerText = finalReportData.total;
+    document.getElementById('resRank').innerText = finalReportData.rank;
+    document.getElementById('resTime').innerText = finalReportData.time;
+    document.getElementById('resDate').innerText = finalReportData.date;
+    document.getElementById('resComment').innerText = finalReportData.comment;
+
+    document.getElementById('finalTable').innerHTML = `
+      <tr><th>Mẫu</th><th>Kết quả nhận biết</th><th>Dấu hiệu đặc trưng</th></tr>
+      <tr><td><b>Lọ A</b></td><td>${nameMap[bottles.A]}</td><td>${getReasonText(bottles.A)}</td></tr>
+      <tr><td><b>Lọ B</b></td><td>${nameMap[bottles.B]}</td><td>${getReasonText(bottles.B)}</td></tr>
+      <tr><td><b>Lọ C</b></td><td>${nameMap[bottles.C]}</td><td>${getReasonText(bottles.C)}</td></tr>
+    `;
+
+    document.getElementById('finalModal').classList.add('show');
+  }
+
+  function getReasonText(type) {
+    if (type === 'lan') return 'Ít tan, lắng cặn đáy ống';
+    if (type === 'dam') return 'Tan; đốt khói trắng, mùi khai';
+    return 'Tan; đốt lửa tím, nổ lép bép';
+  }
+
+  function downloadResultPNG() {
+    playSFX('tap');
+    const canvas = document.createElement('canvas');
+    canvas.width = 720;
+    canvas.height = 880;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = '#1b5e20';
+    ctx.lineWidth = 8;
+    ctx.strokeRect(18, 18, canvas.width - 36, canvas.height - 36);
+
+    ctx.fillStyle = '#1b5e20';
+    ctx.fillRect(18, 18, canvas.width - 36, 110);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 26px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('PHIẾU KẾT QUẢ THÍ NGHIỆM ẢO', canvas.width / 2, 65);
+
+    ctx.font = '18px sans-serif';
+    ctx.fillText('Bài 10: Nhận biết một số loại phân bón hóa học - Công nghệ 10', canvas.width / 2, 100);
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#1c2833';
+    let y = 175;
+    const lineHeight = 44;
+
+    const drawRow = (label, value, valColor = '#1c2833', isBold = false) => {
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillStyle = '#37474f';
+      ctx.fillText(label, 55, y);
+
+      ctx.font = (isBold ? 'bold ' : '') + '20px sans-serif';
+      ctx.fillStyle = valColor;
+      ctx.fillText(value, 260, y);
+      y += lineHeight;
+    };
+
+    drawRow('Họ và tên:', finalReportData.name, '#1b5e20', true);
+    drawRow('Lớp:', finalReportData.className, '#1b5e20', true);
+    drawRow('Ngày thực hiện:', finalReportData.date);
+    drawRow('Thời gian làm bài:', finalReportData.time);
+    drawRow('Điểm từng màn:', finalReportData.subScores);
+    drawRow('TỔNG ĐIỂM:', finalReportData.total, '#d84315', true);
+    drawRow('XẾP LOẠI:', finalReportData.rank, '#0277bd', true);
+
+    y += 10;
+    ctx.strokeStyle = '#cfd8dc';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(55, y);
+    ctx.lineTo(canvas.width - 55, y);
+    ctx.stroke();
+    y += 40;
+
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillStyle = '#1b5e20';
+    ctx.fillText('KẾT QUẢ NHẬN BIẾT MẪU THÍ NGHIỆM:', 55, y);
+    y += 38;
+
+    ctx.font = '19px sans-serif';
+    ctx.fillStyle = '#1c2833';
+    ctx.fillText(`• Lọ A: ${finalReportData.bottleA}`, 75, y); y += 34;
+    ctx.fillText(`• Lọ B: ${finalReportData.bottleB}`, 75, y); y += 34;
+    ctx.fillText(`• Lọ C: ${finalReportData.bottleC}`, 75, y); y += 48;
+
+    ctx.fillStyle = '#f1f8e9';
+    ctx.fillRect(50, y, canvas.width - 100, 115);
+    ctx.strokeStyle = '#81c784';
+    ctx.strokeRect(50, y, canvas.width - 100, 115);
+
+    ctx.font = 'bold 19px sans-serif';
+    ctx.fillStyle = '#1b5e20';
+    ctx.fillText('NHẬN XÉT ĐÁNH GIÁ:', 70, y + 34);
+
+    ctx.font = 'italic 18px sans-serif';
+    ctx.fillStyle = '#263238';
+    const words = finalReportData.comment.split(' ');
+    let line = '';
+    let textY = y + 68;
+    for (let n = 0; n < words.length; n++) {
+      const testLine = line + words[n] + ' ';
+      if (ctx.measureText(testLine).width > canvas.width - 140 && n > 0) {
+        ctx.fillText(line, 70, textY);
+        line = words[n] + ' ';
+        textY += 28;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, 70, textY);
+
+    const link = document.createElement('a');
+    const safeName = finalReportData.name.replace(/\s+/g, '_');
+    link.download = `KetQua_Bai10_${safeName}_${finalReportData.className}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  }
+
+  window.addEventListener('DOMContentLoaded', setupDragAndDrop);
+</script>
+</body>
+</html>
